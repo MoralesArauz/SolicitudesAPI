@@ -10,6 +10,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SolicitudesAPI.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace SolicitudesAPI
 {
@@ -27,6 +29,13 @@ namespace SolicitudesAPI
         {
 
             services.AddControllers();
+            // Agregar la cadena de conexión para el proyecto.
+            //TODO: Debemos guardar la cadena por medio de usersecrets.json y no por medio de appsettings.json
+
+            var conn = "SERVER=.;DATABASE=MSCSolicitudes;Trusted_Connection=True";
+
+            services.AddDbContext<MSCSolicitudesContext>(options => options.UseSqlServer(conn));
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "SolicitudesAPI", Version = "v1" });
@@ -46,6 +55,8 @@ namespace SolicitudesAPI
             app.UseRouting();
 
             app.UseAuthorization();
+
+            //TODO: Revisar si falta alguna config para uso JWT
 
             app.UseEndpoints(endpoints =>
             {
