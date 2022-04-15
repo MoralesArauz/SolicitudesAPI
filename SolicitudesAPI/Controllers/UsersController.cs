@@ -17,9 +17,11 @@ namespace SolicitudesAPI.Controllers
     {
         private readonly MSCSolicitudesContext _context;
 
+        private Tools.Crypto MyCrypto { get; set; }
         public UsersController(MSCSolicitudesContext context)
         {
             _context = context;
+            MyCrypto = new Tools.Crypto();
         }
 
         // GET: api/Users
@@ -41,6 +43,25 @@ namespace SolicitudesAPI.Controllers
             }
 
             return user;
+        }
+
+        //GET: api/Users/ValidateUserLogin
+        [HttpGet("ValidateUserLogin")]
+        public async Task<ActionResult<User>> ValidateUserLogin(string pEmail, string pPassword)
+        {
+            // Se valida el usuario por el email y el password encriptado a nivel de API
+
+            string ApiLevelEncryptedPassword = MyCrypto.EncriptarEnUnSentido(pPassword);
+
+            var user = await _context.Users.SingleOrDefaultAsync(e => e.UserName == pEmail && 
+                                                                 e.Password == ApiLevelEncryptedPassword);
+            // Si no hay respuesta en la consulta, se devulve el mensaje al htto Not Found
+            if (user == null)
+            {
+                return NotFound();
+            }
+            return user;
+
         }
 
         // PUT: api/Users/5
@@ -79,6 +100,13 @@ namespace SolicitudesAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
+            // El password ya viene encriptado desde la app por si alguien intercepta el request,
+            // verá la contraseña encriptada
+            // además acá se volverá a encriptar con otra llave
+
+            string EncryptedPassword = MyCrypto.EncriptarEnUnSentido(user.Password);
+            user.Password = EncryptedPassword;
+
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
