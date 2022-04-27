@@ -13,6 +13,15 @@ namespace SolicitudesAPI.Controllers
     [ApiController]
     public class PurchaseOrdersController : ControllerBase
     {
+
+        public class OrderForReport
+        {
+            public string OrderNumber { get; set; }
+            public string CostumerName { get; set; }
+            public DateTime OrderDate { get; set; }
+            public string OrderDetail { get; set; }
+        }
+
         private readonly MSCSolicitudesContext _context;
 
         public PurchaseOrdersController(MSCSolicitudesContext context)
@@ -25,6 +34,25 @@ namespace SolicitudesAPI.Controllers
         public async Task<ActionResult<IEnumerable<PurchaseOrder>>> GetPurchaseOrders()
         {
             return await _context.PurchaseOrders.ToListAsync();
+        }
+
+        [HttpGet("GetPurchaseOrdersWithJoin")]
+        public async Task<ActionResult<IEnumerable<OrderForReport>>> GetPurchaseOrdersWithJoin()
+        {
+            //var userRole = from role in _context.UserRoles
+            //               where role.IsUserSelectable
+            //               select role;
+            var orders = await (from order in _context.PurchaseOrders
+                         join costumer in _context.Costumers on order.CostumerId equals costumer.CostumerId
+                         select new OrderForReport()
+                         {
+                             OrderNumber = order.PurchaseOrderId,
+                             CostumerName = costumer.FirstName + " " + costumer.LastName,
+                             OrderDate = order.Date,
+                             OrderDetail = order.Details
+                         }).ToListAsync();
+           
+            return orders;
         }
 
         // GET: api/PurchaseOrders/5
@@ -117,5 +145,7 @@ namespace SolicitudesAPI.Controllers
         {
             return _context.PurchaseOrders.Any(e => e.PurchaseOrderId == id);
         }
+
+
     }
 }
